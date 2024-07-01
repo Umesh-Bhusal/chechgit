@@ -28,7 +28,7 @@ jobs:
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your EC2 instance
+          host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your EC2 instance fregfrg
           username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
           script: |
