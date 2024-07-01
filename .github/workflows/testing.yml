@@ -22,7 +22,6 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       
-
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@master
         with:
@@ -34,4 +33,4 @@ jobs:
             sudo apt-get install -y apache2
             sudo systemctl status apache2  
             cd /var/www/html
-            git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
+            sudo git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
