@@ -12,10 +12,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
         
-      - name: Install AWS CLI
+      - name: Check if AWS CLI is installed
         run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+          if ! command -v aws &> /dev/null; then
+            echo "AWS CLI not found. Installing AWS CLI..."
+            sudo apt-get update
+            sudo apt-get install -y awscli
+          else
+            echo "AWS CLI is already installed."
+          fi
 
       - name: Check if Git is installed
         run: |
@@ -44,6 +49,9 @@ jobs:
             fi
             sudo systemctl status apache2
             cd /var/www/html
+            if [ -d "chechgit" ]; then
+              sudo rm -rf chechgit
+            fi
             git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
             cd chechgit
             # Add commands to build and deploy your testing application
@@ -63,10 +71,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install AWS CLI
+      - name: Check if AWS CLI is installed
         run: |
-          sudo apt-get update
-          sudo apt-get install -y awscli
+          if ! command -v aws &> /dev/null; then
+            echo "AWS CLI not found. Installing AWS CLI..."
+            sudo apt-get update
+            sudo apt-get install -y awscli
+          else
+            echo "AWS CLI is already installed."
+          fi
 
       - name: Check if Git is installed
         run: |
@@ -84,10 +97,12 @@ jobs:
 
       - name: Create production branch if it doesn't exist
         run: |
-          if [ $(git ls-remote --heads origin production | wc -l) -eq 0 ]; then
-            git checkout -b production
-          else
+          git fetch origin
+          if [ $(git rev-parse --verify origin/production) ]; then
             git checkout production
+          else
+            git checkout -b production
+            git push origin production
           fi
 
       - name: SSH into Testing EC2 instance to copy code to Production EC2
@@ -96,7 +111,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          
+          script: |
+            rsync -avz -e "ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}" /var/www/html/chechgit/ ${{ secrets.EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }}:/var/www/html/chechgit/
 
       - name: SSH into Production EC2 instance and deploy
         uses: appleboy/ssh-action@master
@@ -112,7 +128,6 @@ jobs:
             sudo systemctl status apache2
             cd /var/www/html/
             sudo chown -R $USER:$USER /var/www/html
-            git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
             
       - name: Terminate Testing EC2 instance
         run: |
