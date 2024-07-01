@@ -34,4 +34,4 @@ jobs:
             sudo apt-get install -y apache2
             sudo systemctl status apache2  
             cd /var/www/html
-            sudo git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
+            git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
