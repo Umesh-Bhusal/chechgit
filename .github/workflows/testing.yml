@@ -72,7 +72,7 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
           script: |
-            rsync -avz --delete -e "ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}" /var/www/html ${{ secrets.EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }}:/var/www/html
+            rsync -avz -e "ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}" /var/www/html/chechgit/ ${{ secrets.EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }}:/var/www/html/chechgit/
 
       - name: SSH into Production EC2 instance and deploy
         uses: appleboy/ssh-action@master
