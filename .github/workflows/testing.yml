@@ -86,7 +86,7 @@ jobs:
         run: |
           if [ $(git ls-remote --heads origin production | wc -l) -eq 0 ]; then
             git checkout -b production
-            git push origin production
+            git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
           else
             git checkout production
           fi
