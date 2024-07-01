@@ -86,7 +86,6 @@ jobs:
         run: |
           if [ $(git ls-remote --heads origin production | wc -l) -eq 0 ]; then
             git checkout -b production
-            git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
           else
             git checkout production
           fi
@@ -97,8 +96,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          script: |
-            rsync -avz -e "ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}" /var/www/html/chechgit/ ${{ secrets.EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }}:/var/www/html/chechgit/
+          
 
       - name: SSH into Production EC2 instance and deploy
         uses: appleboy/ssh-action@master
@@ -114,7 +112,7 @@ jobs:
             sudo systemctl status apache2
             cd /var/www/html/
             sudo chown -R $USER:$USER /var/www/html
-            git checkout production
+            git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
             
       - name: Terminate Testing EC2 instance
         run: |
