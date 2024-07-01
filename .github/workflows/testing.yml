@@ -28,7 +28,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your EC2 instance 
           username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication h
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication 
           script: |
             sudo apt-get update
             sudo apt-get install -y apache2
