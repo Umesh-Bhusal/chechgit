@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - testing
+      - production
 
 jobs:
-  build-and-deploy:
+  test-and-deploy-testing:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,22 +18,79 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y awscli
 
-      
       - name: Configure AWS credentials
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      
-      - name: SSH into EC2 instance and deploy
+
+      - name: SSH into Testing EC2 instance and deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your EC2 instance 
+          host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your testing EC2 instance
           username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication 
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
           script: |
-            sudo apt-get update
-            sudo apt-get install -y apache2
-            sudo systemctl status apache2  
-            cd /var/www/html          
+            if ! command -v apache2 &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y apache2
+            fi
+            sudo systemctl status apache2
+            cd /var/www/html
+            git clone -b testing https://github.com/Umesh-Bhusal/chechgit.git
+            cd chechgit
+            # Add commands to build and deploy your testing application
+            # For example, npm install && npm run build
 
-            git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
+      - name: Run Tests
+        run: |
+          # Add your test commands here
+          echo "Running tests..."
+          # Example: npm test
+          
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: test-and-deploy-testing
+    if: github.ref == 'refs/heads/testing' && success()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y awscli
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: SSH into Testing EC2 instance to copy code to Production EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}  # Hostname or IP of your testing EC2 instance
+          username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
+          script: |
+            rsync -avz --delete -e "ssh -i ${{ secrets.EC2_SSH_PRIVATE_KEY }}" /var/www/html ${{ secrets.EC2_USERNAME }}@${{ secrets.PROD_EC2_HOST }}:/var/www/html
+
+      - name: SSH into Production EC2 instance and deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PROD_EC2_HOST }}  # Hostname or IP of your production EC2 instance
+          username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
+          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
+          script: |
+            if ! command -v apache2 &> /dev/null; then
+              sudo apt-get update
+              sudo apt-get install -y apache2
+            fi
+            sudo systemctl status apache2
+            cd /var/www/html/
+            sudo chown -R $USER:$USER /var/www/html
+            git checkout production
+            
+      - name: Terminate Testing EC2 instance
+        run: |
+          aws ec2 terminate-instances --instance-ids ${{ secrets.TEST_EC2_INSTANCE_ID }}
+          aws ec2 wait instance-terminated --instance-ids ${{ secrets.TEST_EC2_INSTANCE_ID }}
