@@ -22,11 +22,6 @@ jobs:
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       
-      - name: Install Apache server
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y apache2
-          sudo systemctl status apache2
 
       - name: SSH into EC2 instance and deploy
         uses: appleboy/ssh-action@master
@@ -35,5 +30,8 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}  # SSH username for your EC2 instance
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}  # SSH private key for authentication
           script: |
+            sudo apt-get update
+            sudo apt-get install -y apache2
+            sudo systemctl status apache2  
             cd /var/www/html
             git clone -b testing git@github.com:Umesh-Bhusal/chechgit.git
